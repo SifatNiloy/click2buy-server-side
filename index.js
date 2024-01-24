@@ -49,6 +49,15 @@ async function run() {
       res.send({ count, products });
     });
 
+    //product search from database
+    app.get("/products/:name", async (req, res) => {
+      let regex = new RegExp(req.params.name, "i");
+      let result = await productCollection.find({ name: regex }).toArray();
+      console.log(result);
+      res.send(result);
+    });
+
+
     
   } finally {
     // Ensures that the client will close when you finish/error
