@@ -33,6 +33,8 @@ async function run() {
       const products = await cursor.skip(10).limit(8).toArray();
       res.send(products);
     });
+
+     
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
