@@ -26,6 +26,7 @@ async function run() {
     await client.connect();
     const productCollection = client.db("emaJohn").collection("products");
     const OrderCollection = client.db("emaJohn").collection("orders");
+    const reviewCollection = client.db("emaJohn").collection("reviews");
 
     app.get("/limitedProduct", async (req, res) => {
       const query = {};
@@ -57,8 +58,15 @@ async function run() {
       res.send(result);
     });
 
+    //order collection post 
+     app.post("/orders", async (req, res) => {
+      const order = req.body;
+      console.log(order);
+      const result = await OrderCollection.insertOne(order);
+      res.send(result);
+  });
 
-    
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
