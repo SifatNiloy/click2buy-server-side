@@ -57,16 +57,25 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+    //order collection get
+    app.get("/orders", async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+        // return;
+      }
+      const query = { email: email };
+      const result = await OrderCollection.find(query).toArray();
+      res.send(result);
+    });
 
-    //order collection post 
-     app.post("/orders", async (req, res) => {
+    //order collection post
+    app.post("/orders", async (req, res) => {
       const order = req.body;
       console.log(order);
       const result = await OrderCollection.insertOne(order);
       res.send(result);
-  });
-
-
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
