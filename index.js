@@ -60,6 +60,7 @@ async function run() {
     //order collection get
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
+      console.log(email);
       if (!email) {
         res.send([]);
         // return;
@@ -74,6 +75,15 @@ async function run() {
       const order = req.body;
       console.log(order);
       const result = await OrderCollection.insertOne(order);
+      res.send(result);
+    });
+
+    //order delete
+
+    app.delete("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await OrderCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
