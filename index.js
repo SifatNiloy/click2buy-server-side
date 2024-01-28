@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nlpzidc.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -60,9 +60,9 @@ async function run() {
     //order collection get
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+      console.log("Email:", email);
       if (!email) {
-        res.send([]);
+        return res.send([]);
         // return;
       }
       const query = { email: email };
@@ -77,13 +77,20 @@ async function run() {
       const result = await OrderCollection.insertOne(order);
       res.send(result);
     });
-
+    //get order by id
+    app.get("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.findOne(query);
+      // console.log(result)
+      res.send(result);
+    });
     //order delete
-
     app.delete("/orders/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await OrderCollection.deleteOne(query);
+      console.log("Delete result:", result);
       res.send(result);
     });
   } finally {
