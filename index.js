@@ -24,9 +24,17 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const usersCollection = client.db("emaJohn").collection("users");
     const productCollection = client.db("emaJohn").collection("products");
     const OrderCollection = client.db("emaJohn").collection("orders");
     const reviewCollection = client.db("emaJohn").collection("reviews");
+
+    // users related apis
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(req.body);
+      res.send(result);
+    });
 
     app.get("/limitedProduct", async (req, res) => {
       const query = {};
