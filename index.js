@@ -30,6 +30,13 @@ async function run() {
     const reviewCollection = client.db("emaJohn").collection("reviews");
 
     // users related apis
+    //users getting
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+    //user adding
     app.post("/users", async (req, res) => {
       const user = req.body;
 
