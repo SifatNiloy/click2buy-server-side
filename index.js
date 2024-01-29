@@ -9,6 +9,28 @@ const port = process.env.PORT || 5000;
 //middleware
 app.use(cors());
 app.use(express.json());
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  console.log(authorization);
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+
+  // token from bearer
+  const token = authorization.split(" ")[1];
+  console.log("token inside verifyJWT", token);
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+    if (error) {
+      return res
+        .status(403)
+        .send({ error: true, message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nlpzidc.mongodb.net/?retryWrites=true&w=majority`;
@@ -51,11 +73,11 @@ async function run() {
     app.post("/users", async (req, res) => {
       const user = req.body;
 
-      console.log(user);
+      // console.log(user);
       const query = { email: user.email };
       //checking if user already existing, if not, only then add to db
       const existingUser = await usersCollection.findOne(query);
-      console.log("existing user: ", existingUser);
+      // console.log("existing user: ", existingUser);
       if (existingUser) {
         return res.send({ message: "user already exists" });
       }
@@ -68,7 +90,7 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
-      console.log("Delete result:", result);
+      // console.log("Delete result:", result);
       res.send(result);
     });
     // Making an user to Admin
@@ -110,17 +132,18 @@ async function run() {
     app.get("/products/:name", async (req, res) => {
       let regex = new RegExp(req.params.name, "i");
       let result = await productCollection.find({ name: regex }).toArray();
-      console.log(result);
+      // console.log(result);
       res.send(result);
     });
     //order collection get
-    app.get("/orders", async (req, res) => {
+    app.get("/orders", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      console.log("Email:", email);
+      // console.log("Email:", email);
       if (!email) {
         return res.send([]);
         // return;
       }
+      
       const query = { email: email };
       const result = await OrderCollection.find(query).toArray();
       res.send(result);
@@ -129,7 +152,7 @@ async function run() {
     //order collection post
     app.post("/orders", async (req, res) => {
       const order = req.body;
-      console.log(order);
+      // console.log(order);
       const result = await OrderCollection.insertOne(order);
       res.send(result);
     });
@@ -146,7 +169,7 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await OrderCollection.deleteOne(query);
-      console.log("Delete result:", result);
+      // console.log("Delete result:", result);
       res.send(result);
     });
   } finally {
