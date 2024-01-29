@@ -93,6 +93,20 @@ async function run() {
       // console.log("Delete result:", result);
       res.send(result);
     });
+
+    // verifying if user is admin, verifuJWT, and if email is same
+    app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false });
+      }
+      const query = { email: email };
+      const user = usersCollection.findOne(query);
+      const result = { admin: user?.role === "Admin" };
+      res.send(result);
+    });
+
     // Making an user to Admin
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
@@ -143,7 +157,12 @@ async function run() {
         return res.send([]);
         // return;
       }
-      
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
       const query = { email: email };
       const result = await OrderCollection.find(query).toArray();
       res.send(result);
