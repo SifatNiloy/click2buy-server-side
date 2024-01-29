@@ -52,6 +52,27 @@ async function run() {
       res.send(result);
     });
 
+    //user deleting
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      console.log("Delete result:", result);
+      res.send(result);
+    });
+    // Making an user to Admin
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "Admin",
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
     app.get("/limitedProduct", async (req, res) => {
       const query = {};
       const cursor = productCollection.find(query);
