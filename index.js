@@ -17,7 +17,6 @@ const verifyJWT = (req, res, next) => {
       .status(401)
       .send({ error: true, message: "unauthorized access" });
   }
-
   // token from bearer
   const token = authorization.split(" ")[1];
   console.log("token inside verifyJWT", token);
@@ -62,9 +61,22 @@ async function run() {
       res.send(token);
     });
 
+    // using verifyAdmin after verifyJWT
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "Admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden access" });
+      }
+      next();
+    };
+
     // users related apis
     //users getting
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const query = {};
       const result = await usersCollection.find(query).toArray();
       res.send(result);
@@ -102,7 +114,7 @@ async function run() {
         res.send({ admin: false });
       }
       const query = { email: email };
-      const user = usersCollection.findOne(query);
+      const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === "Admin" };
       res.send(result);
     });
@@ -149,6 +161,14 @@ async function run() {
       // console.log(result);
       res.send(result);
     });
+
+    // product adding to database
+    app.post("/products", async (req, res) => {
+      const newProduct = req.body;
+      const result = await productCollection.insertOne(newProduct);
+      res.send(result);
+    });
+
     //order collection get
     app.get("/orders", verifyJWT, async (req, res) => {
       const email = req.query.email;
