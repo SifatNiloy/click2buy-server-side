@@ -163,9 +163,18 @@ async function run() {
     });
 
     // product adding to database
-    app.post("/products", async (req, res) => {
-      const newProduct = req.body;
-      const result = await productCollection.insertOne(newProduct);
+    app.post("/products", verifyJWT, verifyAdmin, async (req, res) => {
+      const productItem = req.body;
+      const result = await productCollection.insertOne(productItem);
+      res.send(result);
+    });
+
+    // delete product
+    app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.deleteOne(query);
+      // console.log("Delete result:", result);
       res.send(result);
     });
 
@@ -210,6 +219,24 @@ async function run() {
       const result = await OrderCollection.deleteOne(query);
       // console.log("Delete result:", result);
       res.send(result);
+    });
+
+    // admin dashboard related operation
+    app.get("/admin-stats", verifyJWT, verifyAdmin, async (req, res) => {
+      const users = await usersCollection.estimatedDocumentCount();
+      const products = await productCollection.estimatedDocumentCount();
+      const orders = await OrderCollection.estimatedDocumentCount();
+
+      const ordersCount = await OrderCollection.find().toArray();
+
+      const totalPrice = ordersCount.reduce(
+        (sum, order) => sum + order.price,
+        0
+      );
+
+      console.log("Total Revenue:", totalPrice);
+
+      res.send({ users, products, orders, totalPrice });
     });
   } finally {
     // Ensures that the client will close when you finish/error
