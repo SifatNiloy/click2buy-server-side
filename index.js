@@ -238,6 +238,29 @@ async function run() {
 
       res.send({ users, products, orders, totalPrice });
     });
+
+
+    // Profile management route
+    app.put("/api/user/profile", verifyJWT, async (req, res) => {
+      try {
+          const { displayName, email, password } = req.body;
+          const updates = { displayName, email };
+
+          const updatedUser = await usersCollection.findOneAndUpdate(
+              { _id: new ObjectId(req.decoded._id) },
+              { $set: updates },
+              { returnOriginal: false }
+          );
+
+          res.json(updatedUser.value);
+      } catch (error) {
+          console.error("Error updating profile:", error);
+          res.status(500).send("Server error");
+      }
+
+  });
+
+
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
