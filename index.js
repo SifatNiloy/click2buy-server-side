@@ -11,25 +11,21 @@ app.use(cors());
 app.use(express.json());
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
-  console.log(authorization);
   if (!authorization) {
-    return res
-      .status(401)
-      .send({ error: true, message: "unauthorized access" });
+    return res.status(401).send({ error: true, message: "Unauthorized access" });
   }
-  // token from bearer
+
   const token = authorization.split(" ")[1];
-  console.log("token inside verifyJWT", token);
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
     if (error) {
-      return res
-        .status(403)
-        .send({ error: true, message: "unauthorized access" });
+      return res.status(403).send({ error: true, message: "Forbidden access" });
     }
     req.decoded = decoded;
     next();
   });
 };
+
+
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.nlpzidc.mongodb.net/?retryWrites=true&w=majority`;
@@ -81,21 +77,55 @@ async function run() {
       const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
-    //user adding
+    // Add a new user
     app.post("/users", async (req, res) => {
       const user = req.body;
-
-      // console.log(user);
-      const query = { email: user.email };
-      //checking if user already existing, if not, only then add to db
-      const existingUser = await usersCollection.findOne(query);
-      // console.log("existing user: ", existingUser);
+      const existingUser = await usersCollection.findOne({ email: user.email });
       if (existingUser) {
-        return res.send({ message: "user already exists" });
+        return res.status(400).send({ message: "User already exists" });
       }
-      const result = await usersCollection.insertOne(req.body);
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+    // Update user profile
+    app.put("/api/user/profile", verifyJWT, async (req, res) => {
+      try {
+        console.log("Request body:", req.body);
+        console.log("Decoded token:", req.decoded);
+        const { displayName, email, password } = req.body;
+        const userId = req.decoded._id;
+    
+        if (!userId) {
+          console.log("Unauthorized user");
+          return res.status(403).send({ message: "Unauthorized user" });
+        }
+    
+        const updates = { displayName, email };
+        if (password) {
+          updates.password = password;
+        }
+    
+        const filter = { _id: new ObjectId(userId) };
+        const updateDoc = { $set: updates };
+    
+        const result = await usersCollection.updateOne(filter, updateDoc);
+        console.log("Update result:", result);
+        if (result.matchedCount === 0) {
+          console.log("User not found");
+          return res.status(404).send({ message: "User not found" });
+        }
+    
+        const updatedUser = await usersCollection.findOne(filter);
+        res.send(updatedUser);
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).send({ message: "Server error" });
+      }
+    });
+    
+    
+
 
     //user deleting
     app.delete("/users/:id", async (req, res) => {
@@ -239,28 +269,24 @@ async function run() {
       res.send({ users, products, orders, totalPrice });
     });
 
-
     // Profile management route
     app.put("/api/user/profile", verifyJWT, async (req, res) => {
       try {
-          const { displayName, email, password } = req.body;
-          const updates = { displayName, email };
+        const { displayName, email, password } = req.body;
+        const updates = { displayName, email };
 
-          const updatedUser = await usersCollection.findOneAndUpdate(
-              { _id: new ObjectId(req.decoded._id) },
-              { $set: updates },
-              { returnOriginal: false }
-          );
+        const updatedUser = await usersCollection.findOneAndUpdate(
+          { _id: new ObjectId(req.decoded._id) },
+          { $set: updates },
+          { returnOriginal: false }
+        );
 
-          res.json(updatedUser.value);
+        res.json(updatedUser.value);
       } catch (error) {
-          console.error("Error updating profile:", error);
-          res.status(500).send("Server error");
+        console.error("Error updating profile:", error);
+        res.status(500).send("Server error");
       }
-
-  });
-
-
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
