@@ -5,8 +5,6 @@
 Click2Buy is a modular, modern **e-commerce backend** built with **TypeScript, Node.js, Express, MongoDB, Mongoose, Zod, and JWT authentication**.  
 This backend provides APIs for managing **users, products, orders**, and **admin statistics**. The project is fully modular, type-safe, and designed for production-ready scalability.  
 
-It is ideal as a **resume project** demonstrating modern backend architecture.
-
 ---
 
 ## Tech Stack
@@ -97,7 +95,7 @@ URL: /users
 
 Headers: Authorization: Bearer <JWT_TOKEN>
 
-Response Example:
+## Response Example:
 
 
 
@@ -109,7 +107,7 @@ Response Example:
     "displayName": "John Doe"
   }
 ]
-b) Create User
+## b) Create User
 Method: POST
 
 URL: /users
@@ -134,7 +132,7 @@ Response Example:
   "acknowledged": true,
   "insertedId": "64fa5678abcd1234ef901234"
 }
-c) Update Profile (Authenticated)
+## c) Update Profile (Authenticated)
 Method: PUT
 
 URL: /api/user/profile
@@ -160,7 +158,7 @@ Response Example:
   "displayName": "Updated Name",
   "role": "User"
 }
-d) Delete User
+## d) Delete User
 Method: DELETE
 
 URL: /users/<USER_ID>
@@ -175,7 +173,7 @@ Response Example:
   "acknowledged": true,
   "deletedCount": 1
 }
-e) Make User Admin
+## e) Make User Admin
 Method: PATCH
 
 URL: /users/admin/<USER_ID>
@@ -190,7 +188,7 @@ Response Example:
   "acknowledged": true,
   "modifiedCount": 1
 }
-f) Check Admin by Email
+## f) Check Admin by Email
 Method: GET
 
 URL: /users/admin/<EMAIL>
@@ -204,8 +202,8 @@ Response Example:
 {
   "admin": true
 }
-Products API
-a) Get All Products (Paginated)
+** Products API **
+## a) Get All Products (Paginated)
 Method: GET
 
 URL: /products?page=0&size=10
@@ -221,7 +219,7 @@ Response Example:
     { "_id": "p2", "name": "Product 2", "price": 49.99 }
   ]
 }
-b) Get Limited Products
+## b) Get Limited Products
 Method: GET
 
 URL: /limitedProduct
@@ -234,7 +232,7 @@ Response Example:
   { "_id": "p11", "name": "Product 11", "price": 59.99 },
   { "_id": "p12", "name": "Product 12", "price": 79.99 }
 ]
-c) Search Product by Name
+## c) Search Product by Name
 Method: GET
 
 URL: /products/<NAME>
@@ -246,7 +244,7 @@ Response Example:
 [
   { "_id": "p5", "name": "Laptop", "price": 899.99 }
 ]
-d) Add Product (Admin only)
+## d) Add Product (Admin only)
 Method: POST
 
 URL: /products
@@ -272,7 +270,7 @@ Response Example:
   "acknowledged": true,
   "insertedId": "p101"
 }
-e) Delete Product
+## e) Delete Product
 Method: DELETE
 
 URL: /products/<PRODUCT_ID>
@@ -287,8 +285,8 @@ Response Example:
   "acknowledged": true,
   "deletedCount": 1
 }
-Orders API
-a) Get Orders for a User
+** Orders API **
+## a) Get Orders for a User
 Method: GET
 
 URL: /orders?email=user@example.com
@@ -310,7 +308,7 @@ Response Example:
     "price": 299.99
   }
 ]
-b) Create Order
+## b) Create Order
 Method: POST
 
 URL: /orders
@@ -337,7 +335,7 @@ Response Example:
   "acknowledged": true,
   "insertedId": "o101"
 }
-c) Get Order by ID
+## c) Get Order by ID
 Method: GET
 
 URL: /orders/<ORDER_ID>
@@ -354,7 +352,7 @@ Response Example:
   ],
   "price": 199.99
 }
-d) Delete Order
+## d) Delete Order
 Method: DELETE
 
 URL: /orders/<ORDER_ID>
