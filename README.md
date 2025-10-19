@@ -48,7 +48,7 @@ Restarts server on any code change
 ``` bash
 
 yarn build
-yarn start
+yarn start##
 API Documentation
 Base URL: http://localhost:5000
 
@@ -87,7 +87,7 @@ Response Example:
 
 
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-Users API
+### Users API
 a) Get All Users (Admin only)
 Method: GET
 
@@ -202,7 +202,7 @@ Response Example:
 {
   "admin": true
 }
-** Products API **
+### Products API 
 ## a) Get All Products (Paginated)
 Method: GET
 
@@ -285,7 +285,7 @@ Response Example:
   "acknowledged": true,
   "deletedCount": 1
 }
-** Orders API **
+### Orders API 
 ## a) Get Orders for a User
 Method: GET
 
@@ -352,7 +352,7 @@ Response Example:
   ],
   "price": 199.99
 }
-## d) Delete Order
+** d) Delete Order **
 Method: DELETE
 
 URL: /orders/<ORDER_ID>
