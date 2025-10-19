@@ -55,19 +55,16 @@ Base URL: http://localhost:5000
 For all protected routes, include JWT in headers:
 Authorization: Bearer <JWT_TOKEN>
 
-1. Server Health
-Method: GET
+### 1. Server Health
+**Method:** `GET`  
+**URL:** `/`  
+**Body:** None  
 
-URL: /
-
-Body: None
-
-Response:
-
-
-
+**Response:**
+```json
 "click2buy server connected"
-2. JWT Token Generation
+
+###  2. JWT Token Generation
 Method: POST
 
 URL: /jwt
@@ -83,9 +80,7 @@ Body:
   "role": "User"
 }
 Response Example:
-
-
-
+```
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ### Users API
 a) Get All Users (Admin only)
