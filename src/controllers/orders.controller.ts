@@ -1,31 +1,166 @@
 import { Request, Response } from "express";
-import OrderModel from "../models/Order.model";
+import { v4 as uuid } from "uuid";
+import { SendErrorResponse, SendResponse } from "../utils/response";
+import * as OrderService from "../services/order.service";
+import {
+  createOrderSchema,
+  idParamSchema,
+  updateOrderStatusSchema,
+  queryEmailSchema
+} from "../schemas/order.schema";
+import { DATA_NOT_FOUND, INCORRECT_INPUT, SYSTEM_CURRENT_FEATURES } from "../constant/products.constant";
 
-export const getOrders = async (req: Request, res: Response) => {
-  const email = req.query.email as string | undefined;
-  if (!email) return res.json([]);
 
-  const requester = (req as any).user;
-  if (!requester || requester.email !== email) return res.status(403).json({ error: true, message: "forbidden access" });
+function buildErrorPayload(
+  endpoint: string,
+  functionName: string,
+  method: string,
+  message: string,
+  error: { code: string; message: string },
+  customMsg: string
+) {
+  return {
+    message,
+    data: {
+      clientError: { ...error, message: customMsg },
+      endpoint,
+      functionName,
+      method,
+      service: SYSTEM_CURRENT_FEATURES.ECOMMERCE,
+      id: uuid()
+    }
+  };
+}
 
-  const orders = await OrderModel.find({ email });
-  res.json(orders);
-};
+export async function postOrder(req: Request, res: Response) {
+  const functionName = postOrder.name;
+  const parsed = createOrderSchema.safeParse({ body: req.body });
+  if (!parsed.success) {
+    return SendErrorResponse.error({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Invalid order data", INCORRECT_INPUT, parsed.error.message)
+    });
+  }
+  try {
+    const created = await OrderService.createOrder(parsed.data.body);
+    return SendResponse.created({ res, message: "Order placed", data: { order: created } });
+  } catch (err: any) {
+    return SendErrorResponse.serverError({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Order creation failed", DATA_NOT_FOUND, err?.message ?? "Error creating order")
+    });
+  }
+}
 
-export const postOrder = async (req: Request, res: Response) => {
-  const order = req.body;
-  const created = await OrderModel.create(order);
-  res.status(201).json(created);
-};
+export async function getOrders(req: Request, res: Response) {
+  const functionName = getOrders.name;
+  const parsed = queryEmailSchema.safeParse({ query: req.query });
+  if (!parsed.success) {
+    return SendErrorResponse.error({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Invalid query", INCORRECT_INPUT, parsed.error.message)
+    });
+  }
+  const email = parsed.data.query.email;
+  try {
+    const data = email ? await OrderService.findOrdersByEmail(email) : await OrderService.findAllOrders();
+    return SendResponse.ok({ res, message: "Orders fetched", data: { orders: data } });
+  } catch (err: any) {
+    return SendErrorResponse.serverError({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Fetch orders failed", DATA_NOT_FOUND, err?.message ?? "Could not fetch orders")
+    });
+  }
+}
 
-export const getOrderById = async (req: Request, res: Response) => {
-  const id = req.params.id;
-  const order = await OrderModel.findById(id);
-  res.json(order);
-};
+export async function getOrderById(req: Request, res: Response) {
+  const functionName = getOrderById.name;
+  const parsed = idParamSchema.safeParse({ params: req.params });
+  if (!parsed.success) {
+    return SendErrorResponse.error({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Invalid id", INCORRECT_INPUT, parsed.error.message)
+    });
+  }
+  try {
+    const order = await OrderService.findOrderById(req.params.id);
+    if (!order) {
+      return SendErrorResponse.notFound({
+        res,
+        ...buildErrorPayload(req.originalUrl, functionName, req.method, "Order not found", DATA_NOT_FOUND, "No order found with given id")
+      });
+    }
+    return SendResponse.ok({ res, message: "Order fetched", data: { order } });
+  } catch (err: any) {
+    return SendErrorResponse.serverError({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Fetch order failed", DATA_NOT_FOUND, err?.message ?? "Could not get order")
+    });
+  }
+}
 
-export const deleteOrder = async (req: Request, res: Response) => {
-  const id = req.params.id;
-  await OrderModel.deleteOne({ _id: id });
-  res.json({ success: true });
-};
+export async function deleteOrder(req: Request, res: Response) {
+  const functionName = deleteOrder.name;
+  const parsed = idParamSchema.safeParse({ params: req.params });
+  if (!parsed.success) {
+    return SendErrorResponse.error({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Invalid id", INCORRECT_INPUT, parsed.error.message)
+    });
+  }
+  try {
+    const order = await OrderService.findOrderById(req.params.id);
+    if (!order) {
+      return SendErrorResponse.notFound({
+        res,
+        ...buildErrorPayload(req.originalUrl, functionName, req.method, "Order not found", DATA_NOT_FOUND, "Cannot delete nonexistent order")
+      });
+    }
+    await OrderService.deleteOrderById(req.params.id);
+    return SendResponse.ok({ res, message: "Order deleted", data: { success: true } });
+  } catch (err: any) {
+    return SendErrorResponse.serverError({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Delete failed", DATA_NOT_FOUND, err?.message ?? "Could not delete order")
+    });
+  }
+}
+
+export async function updateOrderStatus(req: Request, res: Response) {
+  const functionName = updateOrderStatus.name;
+  const parsed = updateOrderStatusSchema.safeParse({ params: req.params, body: req.body });
+  if (!parsed.success) {
+    return SendErrorResponse.error({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Invalid payload", INCORRECT_INPUT, parsed.error.message)
+    });
+  }
+  try {
+    const order = await OrderService.updateOrderStatus(req.params.id, parsed.data.body.orderStatus);
+    if (!order) {
+      return SendErrorResponse.notFound({
+        res,
+        ...buildErrorPayload(req.originalUrl, functionName, req.method, "Order not found", DATA_NOT_FOUND, "No order found with given id")
+      });
+    }
+    return SendResponse.ok({ res, message: "Order status updated", data: { order } });
+  } catch (err: any) {
+    return SendErrorResponse.serverError({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Status update failed", DATA_NOT_FOUND, err?.message ?? "Could not update order status")
+    });
+  }
+}
+
+export async function getOrderStats(req: Request, res: Response) {
+  const functionName = getOrderStats.name;
+  try {
+    const stats = await OrderService.getOrderStats();
+    return SendResponse.ok({ res, message: "Order stats", data: stats });
+  } catch (err: any) {
+    return SendErrorResponse.serverError({
+      res,
+      ...buildErrorPayload(req.originalUrl, functionName, req.method, "Stats fetch failed", DATA_NOT_FOUND, err?.message ?? "Could not fetch stats")
+    });
+  }
+}
