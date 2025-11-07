@@ -1,25 +1,39 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "../utils/jwt.util";
+import admin from "../utils/firebaseAdmin";
 import UserModel from "../models/User.model";
 
-/**
- * Attaches decoded token to req.user
- */
-export const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
+export const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ error: true, message: "Unauthorized access" });
 
-  const parts = auth.split(" ");
-  if (parts.length !== 2 || parts[0] !== "Bearer")
+  const [type, token] = auth.split(" ");
+  if (type !== "Bearer" || !token)
     return res.status(401).json({ error: true, message: "Invalid authorization format" });
 
-  const token = parts[1];
   try {
-    const decoded = verifyToken(token);
-    // attach to req
-    (req as any).user = decoded;
+    const decoded = await admin.auth().verifyIdToken(token);
+
+    (req as any).user = {
+      uid: decoded.uid,
+      email: decoded.email,
+      name: decoded.name || decoded.displayName,
+      picture: decoded.picture,
+    };
+
+    // Upsert user in DB
+    const dbUser = await UserModel.findOneAndUpdate(
+      { email: decoded.email },
+      {
+        $set: { displayName: decoded.name || decoded.displayName },
+        $setOnInsert: { role: "User" },
+      },
+      { upsert: true, new: true }
+    );
+
+    (req as any).user._id = dbUser._id;
     next();
   } catch (err) {
+    console.error("Firebase token verification error:", err);
     return res.status(403).json({ error: true, message: "Forbidden access" });
   }
 };
