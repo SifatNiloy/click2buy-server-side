@@ -9,7 +9,7 @@ export const adminStats = async (req: Request, res: Response) => {
   const orders = await OrderModel.estimatedDocumentCount();
 
   const ordersList = await OrderModel.find();
-  const totalPrice = ordersList.reduce((sum, o) => sum + (o.price || 0), 0);
+  const totalPrice = ordersList.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 
   res.json({ users, products, orders, totalPrice });
 };

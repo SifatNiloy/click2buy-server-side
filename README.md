@@ -29,26 +29,24 @@ cd click2buy-server-side
 ```
 ### 2. Install dependencies
 ```bash
-
-yarn
+npm install
 ```
 ### 3. Setup environment variables
 Create a .env file in the root:
 
 ### 4. Development server
 ```bash
-
-yarn dev
+npm run dev
 ```
 Automatically compiles TypeScript to dist/
 
 Restarts server on any code change
 
 ### 5. Production build
-``` bash
-
-yarn build
-yarn start##
+```bash
+npm run build
+npm start
+```
 API Documentation
 Base URL: http://localhost:5000
 
